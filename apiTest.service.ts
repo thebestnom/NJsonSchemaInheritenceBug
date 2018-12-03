@@ -14,7 +14,6 @@ import { HttpClient, HttpHeaders, HttpResponse, HttpResponseBase } from '@angula
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
 export interface IValuesClient {
-    get(): Observable<string[] | null>;
     index(randomInheritenceOfDad: Dad): Observable<string | null>;
 }
 
@@ -29,60 +28,8 @@ export class ValuesClient implements IValuesClient {
         this.baseUrl = baseUrl ? baseUrl : "http://localhost:5000";
     }
 
-    get(): Observable<string[] | null> {
-        let url_ = this.baseUrl + "/api/Values";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_ : any = {
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGet(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGet(<any>response_);
-                } catch (e) {
-                    return <Observable<string[] | null>><any>_observableThrow(e);
-                }
-            } else
-                return <Observable<string[] | null>><any>_observableThrow(response_);
-        }));
-    }
-
-    protected processGet(response: HttpResponseBase): Observable<string[] | null> {
-        const status = response.status;
-        const responseBlob = 
-            response instanceof HttpResponse ? response.body : 
-            (<any>response).error instanceof Blob ? (<any>response).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }};
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (resultData200 && resultData200.constructor === Array) {
-                result200 = [];
-                for (let item of resultData200)
-                    result200.push(item);
-            }
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<string[] | null>(<any>null);
-    }
-
     index(randomInheritenceOfDad: Dad): Observable<string | null> {
-        let url_ = this.baseUrl + "/api/Values";
+        let url_ = this.baseUrl + "/";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(randomInheritenceOfDad);
@@ -160,6 +107,11 @@ export abstract class Dad implements IDad {
 
     static fromJS(data: any): Dad {
         data = typeof data === 'object' ? data : {};
+        if (data["discriminator"] === "Son") {
+            let result = new Son();
+            result.init(data);
+            return result;
+        }
         throw new Error("The abstract class 'Dad' cannot be instantiated.");
     }
 
@@ -211,6 +163,44 @@ export class RandomClass implements IRandomClass {
 
 export interface IRandomClass {
     randomProp?: number;
+}
+
+export class Son extends Dad implements ISon {
+    sonProp?: number;
+    sonRandomClassDto?: RandomClass | undefined;
+
+    constructor(data?: ISon) {
+        super(data);
+        this._discriminator = "Son";
+    }
+
+    init(data?: any) {
+        super.init(data);
+        if (data) {
+            this.sonProp = data["sonProp"];
+            this.sonRandomClassDto = data["sonRandomClassDto"] ? RandomClass.fromJS(data["sonRandomClassDto"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): Son {
+        data = typeof data === 'object' ? data : {};
+        let result = new Son();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["sonProp"] = this.sonProp;
+        data["sonRandomClassDto"] = this.sonRandomClassDto ? this.sonRandomClassDto.toJSON() : <any>undefined;
+        super.toJSON(data);
+        return data; 
+    }
+}
+
+export interface ISon extends IDad {
+    sonProp?: number;
+    sonRandomClassDto?: IRandomClass | undefined;
 }
 
 export class SwaggerException extends Error {
