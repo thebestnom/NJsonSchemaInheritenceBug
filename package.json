@@ -5,5 +5,8 @@
   "license": "MIT",
   "devDependencies": {
     "nswag": "^12.0.4"
+  },
+  "scripts": {
+    "rerun-nswag": "nswag run"
   }
 }
