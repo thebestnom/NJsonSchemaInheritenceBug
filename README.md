@@ -1,0 +1,2 @@
+# NJsonSchemaInheritenceBug
+a minimum project for reproducing convertConstructorInterfaceData not working in inheritence
