@@ -1,0 +1,9 @@
+{
+  "name": "TestClient",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "nswag": "^12.0.4"
+  }
+}
