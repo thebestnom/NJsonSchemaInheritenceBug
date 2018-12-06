@@ -1,6 +1,8 @@
 # NJsonSchemaInheritenceBug
 a minimum project for reproducing convertConstructorInterfaceData not working in inheritence
 
+# Fixed in last version of nswag!!
+
 the model is a base class Dad and inherited class Son, and random class RandomClass
 
 Both Dad and Son have RandomClass inside them, and setting `convertConstructorInterfaceData` to true should add 
